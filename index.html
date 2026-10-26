@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>四川轻化工大学 · 开放原子开源协会 · 机器狗控制台</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --line:#e6eaf0;
+    --line2:#d6dce6;
+    --txt:#111827;
+    --dim:#6b7280;
+    --acc:#1478a8;
+    --acc-soft:#e8f4fa;
+    --ok:#16a34a;
+    --danger:#dc2626;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--txt);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:0 14px}
+
+  /* ---------- 顶栏 ---------- */
+  header{
+    position:sticky; top:0; z-index:30; background:rgba(255,255,255,.94);
+    border-bottom:1px solid var(--line); backdrop-filter:blur(10px);
+  }
+  .hd{display:flex; align-items:center; gap:10px; padding:10px 0}
+  .brand{display:flex; align-items:center; gap:10px; min-width:0}
+  .logo{width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid var(--line); background:#fff; flex:0 0 auto}
+  .logo-fb{
+    width:44px; height:44px; border-radius:50%; border:1px solid var(--line2); background:var(--acc-soft);
+    color:var(--acc); font-size:12px; font-weight:800; letter-spacing:.5px; display:none;
+    align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .titles{min-width:0}
+  .titles h1{margin:0; font-size:15px; font-weight:800; letter-spacing:.3px; white-space:nowrap}
+  .titles p{margin:1px 0 0; font-size:12px; color:var(--dim); white-space:nowrap}
+  .spacer{flex:1}
+  .conn{display:flex; align-items:center; gap:6px; flex:0 0 auto}
+  .ip{
+    width:132px; padding:8px 10px; border:1px solid var(--line2); border-radius:10px;
+    font:inherit; font-size:13px; color:var(--txt); background:#fff; outline:none;
+  }
+  .ip:focus{border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft)}
+  .btn-conn{
+    padding:8px 14px; border:1px solid var(--acc); border-radius:10px; background:var(--acc);
+    color:#fff; font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .btn-conn:active{filter:brightness(.95)}
+  .btn-conn.ok{background:var(--ok); border-color:var(--ok)}
+  .btn-conn.bad{background:var(--danger); border-color:var(--danger)}
+
+  /* ---------- 卡片 ---------- */
+  main{padding-top:12px; display:flex; flex-direction:column; gap:12px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px;
+    box-shadow:0 1px 2px rgba(17,24,39,.04);
+  }
+  .card-hd{display:flex; align-items:center; gap:8px; margin:0 0 10px}
+  .card-hd h2{margin:0; font-size:12.5px; font-weight:800; letter-spacing:1.4px; color:var(--dim); text-transform:uppercase}
+  .card-hd .val{margin-left:auto; font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums}
+
+  /* ---------- 中间三栏 ---------- */
+  .mid{
+    display:grid; grid-template-columns:86px minmax(0,1fr) 86px; gap:8px; align-items:start;
+  }
+  @media(min-width:560px){
+    .mid{grid-template-columns:130px minmax(0,1fr) 130px; gap:14px}
+  }
+  .side{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+  .side .lbl{grid-column:1/-1; font-size:11px; color:var(--dim); text-align:center; margin-bottom:2px}
+
+  .abtn{
+    padding:9px 2px; border:1px solid var(--line2); border-radius:10px; background:#fff;
+    font:inherit; font-size:11.5px; font-weight:600; color:var(--txt); cursor:pointer;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    transition:background .12s, border-color .12s, color .12s, transform .08s;
+  }
+  .abtn:active{transform:scale(.96); background:var(--acc-soft); border-color:var(--acc); color:var(--acc)}
+  .abtn.on{background:var(--acc); border-color:var(--acc); color:#fff}
+  .abtn em{display:block; font-size:15px; font-style:normal; line-height:1.15}
+
+  .dpad{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; align-content:start}
+  .dbtn{
+    height:52px; border:1px solid var(--line2); border-radius:12px; background:#fff;
+    font:inherit; font-size:17px; color:var(--txt); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .08s, background .12s, border-color .12s, color .12s, box-shadow .12s;
+    touch-action:none; user-select:none;
+  }
+  .dbtn:active,.dbtn.on{background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 4px 12px -6px rgba(20,120,168,.8)}
+  .dbtn.stop{background:#fff5f5; border-color:#f3c6c6; color:var(--danger); font-size:13px; font-weight:800}
+  .dbtn.stop:active,.dbtn.stop.on{background:var(--danger); border-color:var(--danger); color:#fff}
+  .dpad .gap{visibility:hidden}
+
+  /* ---------- 灯光 ---------- */
+  .sw-row{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none}
+  .sw-row::-webkit-scrollbar{display:none}
+  .sw{
+    flex:0 0 auto; width:36px; height:36px; border-radius:50%; border:2px solid #fff;
+    box-shadow:0 0 0 1px var(--line2); cursor:pointer; padding:0;
+  }
+  .sw.on{box-shadow:0 0 0 2px var(--acc)}
+  .sw.off{
+    background:#f3f5f8; color:var(--dim); font:inherit; font-size:11px; font-weight:700;
+    display:grid; place-items:center; border-style:dashed; border-color:var(--line2);
+  }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; width:100%; height:30px; background:transparent; cursor:pointer; margin:0;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:6px; border-radius:99px;
+    background:linear-gradient(90deg, var(--acc) var(--p,50%), #e9edf3 var(--p,50%));
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; margin-top:-7px; border-radius:50%; background:#fff;
+    border:2px solid var(--acc); box-shadow:0 1px 4px rgba(0,0,0,.15);
+  }
+  input[type=range]::-moz-range-track{height:6px; border-radius:99px; background:#e9edf3}
+  input[type=range]::-moz-range-progress{height:6px; border-radius:99px; background:var(--acc)}
+  input[type=range]::-moz-range-thumb{width:18px; height:18px; border:2px solid var(--acc); background:#fff; border-radius:50%}
+  .fx-row{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap}
+  .fx{
+    padding:7px 12px; border:1px solid var(--line2); border-radius:999px; background:#fff;
+    font:inherit; font-size:12.5px; font-weight:600; color:var(--txt); cursor:pointer;
+  }
+  .fx:active,.fx.on{background:var(--acc); border-color:var(--acc); color:#fff}
+
+  /* ---------- 画板 ---------- */
+  canvas#pad{
+    width:100%; height:auto; display:block; border-radius:12px; background:#fff;
+    border:1px solid var(--line2); touch-action:none; image-rendering:pixelated; cursor:crosshair;
+  }
+  .tools{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  .tbtn{
+    padding:8px 12px; border:1px solid var(--line2); border-radius:10px; background:#fff;
+    font:inherit; font-size:12.5px; font-weight:600; color:var(--txt); cursor:pointer;
+  }
+  .tbtn:active{transform:scale(.97)}
+  .tbtn.on,.tbtn.primary{background:var(--acc); border-color:var(--acc); color:#fff}
+  .tbtn:disabled{opacity:.45; cursor:default}
+  .field{
+    padding:8px 10px; border:1px solid var(--line2); border-radius:10px; background:#fff;
+    font:inherit; font-size:13px; color:var(--txt); outline:none; min-width:0;
+  }
+  .field:focus{border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft)}
+
+  /* ---------- 动作步骤 ---------- */
+  .steps{display:flex; flex-direction:column; gap:6px}
+  .step{display:flex; align-items:center; gap:5px}
+  .step .no{width:16px; font-size:11px; color:var(--dim); text-align:right; flex:0 0 auto}
+  .step input{
+    width:46px; padding:6px 2px; text-align:center; border:1px solid var(--line2); border-radius:8px;
+    font:inherit; font-size:12.5px; color:var(--txt); background:#fff; outline:none;
+    -moz-appearance:textfield;
+  }
+  .step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  .step input:focus{border-color:var(--acc)}
+  .step .dl{width:58px}
+  .step .x{
+    width:26px; height:26px; border:1px solid var(--line2); border-radius:8px; background:#fff;
+    color:var(--dim); font:inherit; font-size:13px; cursor:pointer; flex:0 0 auto;
+  }
+  .step .x:active{background:#fff5f5; color:var(--danger); border-color:#f3c6c6}
+
+  .list{display:flex; flex-direction:column; gap:6px; margin-top:10px}
+  .item{display:flex; align-items:center; gap:6px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:13px}
+  .item .grow{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .item .meta{font-size:11.5px; color:var(--dim)}
+  .mini{
+    padding:5px 9px; border:1px solid var(--line2); border-radius:8px; background:#fff;
+    font:inherit; font-size:11.5px; font-weight:600; color:var(--txt); cursor:pointer; flex:0 0 auto;
+  }
+  .mini:active{background:var(--acc-soft); border-color:var(--acc); color:var(--acc)}
+  .mini.danger{color:var(--danger); border-color:#f3c6c6}
+  .empty{padding:8px 2px; font-size:12.5px; color:var(--dim)}
+  .hint{margin:6px 0 0; font-size:12px; color:var(--dim); line-height:1.55}
+  .hint.err{color:var(--danger)}
+  .hint.ok{color:var(--ok)}
+
+  /* ---------- toast ---------- */
+  #toasts{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+    z-index:90; display:flex; flex-direction:column; gap:8px; width:calc(100% - 36px); max-width:420px; pointer-events:none}
+  .toast{
+    background:#111827; color:#fff; padding:10px 14px; border-radius:10px; font-size:13px;
+    text-align:center; box-shadow:0 10px 30px -12px rgba(0,0,0,.5); animation:tin .2s ease;
+    transition:opacity .3s, transform .3s;
+  }
+  .toast.err{background:var(--danger)}
+  .toast.ok{background:var(--ok)}
+  @keyframes tin{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="brand">
+      <img class="logo" id="logoImg" src="./oaa.jpg" alt="OAA">
+      <div class="logo-fb" id="logoFb">OAA</div>
+      <div class="titles">
+        <h1>四川轻化工大学</h1>
+        <p>开放原子开源协会 · 机器狗控制台</p>
+      </div>
+    </div>
+    <span class="spacer"></span>
+    <div class="conn">
+      <input class="ip" id="ipInput" inputmode="decimal" placeholder="192.168.1.100" autocomplete="off" spellcheck="false">
+      <button class="btn-conn" id="btnConnect">连接</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 中间三栏：动作 / 方向 / 表情 -->
+  <section class="card mid">
+    <div class="side" id="poseCol"></div>
+    <div class="dpad">
+      <button class="dbtn gap" tabindex="-1"></button>
+      <button class="dbtn" data-dir="forward">▲</button>
+      <button class="dbtn gap" tabindex="-1"></button>
+      <button class="dbtn" data-dir="left">◀</button>
+      <button class="dbtn stop" data-dir="stop">停</button>
+      <button class="dbtn" data-dir="right">▶</button>
+      <button class="dbtn gap" tabindex="-1"></button>
+      <button class="dbtn" data-dir="back">▼</button>
+      <button class="dbtn gap" tabindex="-1"></button>
+    </div>
+    <div class="side" id="faceCol"></div>
+  </section>
+
+  <!-- 自定义灯光 -->
+  <section class="card">
+    <div class="card-hd"><h2>自定义灯光</h2><span class="val" id="briVal">50%</span></div>
+    <div class="sw-row" id="swatches"></div>
+    <input type="range" id="bright" min="0" max="100" value="50">
+    <div class="fx-row" id="effects">
+      <button class="fx" data-effect="flash_light">闪烁</button>
+      <button class="fx" data-effect="water_light">流水</button>
+      <button class="fx" data-effect="breathe_light">呼吸</button>
+      <button class="fx" data-effect="rainbow_light">彩虹</button>
+    </div>
+    <p class="hint" id="lightState"></p>
+  </section>
+
+  <!-- 绘图 -->
+  <section class="card">
+    <div class="card-hd"><h2>绘图</h2><span class="val">128 × 64</span></div>
+    <canvas id="pad" width="512" height="256"></canvas>
+    <div class="tools">
+      <button class="tbtn on" id="toolPen">画笔</button>
+      <button class="tbtn" id="toolEraser">橡皮</button>
+      <button class="tbtn" id="btnClear">清空</button>
+      <button class="tbtn" id="btnInvert">反色</button>
+      <button class="tbtn" id="btnTest">测试图</button>
+    </div>
+    <div class="tools">
+      <input class="field" id="padName" placeholder="名字 myface" style="flex:1 1 100px">
+      <button class="tbtn primary" id="btnSend">上屏</button>
+      <button class="tbtn" id="btnSaveSD">只上传</button>
+      <button class="tbtn" id="btnPickFile">选图片/视频</button>
+      <input type="file" id="emoFile" accept="image/*,video/*" hidden>
+    </div>
+    <p class="hint" id="padState"></p>
+    <div class="list" id="emoList"></div>
+  </section>
+
+  <!-- 自定义动作 -->
+  <section class="card">
+    <div class="card-hd"><h2>自定义动作</h2><span class="val">四腿角度 + 延时</span></div>
+    <div class="tools">
+      <input class="field" id="actionName" placeholder="动作名 hello" style="flex:1 1 100px">
+      <button class="tbtn primary" id="btnSaveAction">保存</button>
+      <button class="tbtn" id="btnListActions">刷新</button>
+    </div>
+    <div class="steps" id="stepList"></div>
+    <div class="tools"><button class="tbtn" id="btnAddStep" style="flex:1">＋ 添加一步</button></div>
+    <div class="list" id="actionList"></div>
+  </section>
+
+</main>
+
+<div id="toasts"></div>
+
+<script>
+'use strict';
+
+var $ = function(id){ return document.getElementById(id); };
+var LS = 'dog_console_v4';
+
+/* ---------------- 常量 ---------------- */
+var POSES = [
+  { dir:'stand',   label:'站立', icon:'🧍' },
+  { dir:'sitdown', label:'坐下', icon:'🪑' },
+  { dir:'sleep',   label:'睡觉', icon:'😴' },
+  { dir:'wake',    label:'唤醒', icon:'⏰' },
+  { dir:'stretch', label:'伸懒腰', icon:'🙆' },
+  { dir:'scratching', label:'挠痒', icon:'🐾' },
+  { dir:'swing',   label:'摇摆', icon:'🎵' },
+  { dir:'petwave', label:'挥手', icon:'👋' },
+  { dir:'jump',    label:'跳',   icon:'⤴️' }
+];
+
+var FACES = [
+  { name:'happiness', label:'开心', icon:'😊' },
+  { name:'neutral',   label:'普通', icon:'😐' },
+  { name:'sad',       label:'难过', icon:'😢' },
+  { name:'angry',     label:'生气', icon:'😠' },
+  { name:'surprised', label:'惊讶', icon:'😲' },
+  { name:'sleepy',    label:'困了', icon:'😪' },
+  { name:'love',      label:'喜欢', icon:'😍' },
+  { name:'random',    label:'随机', icon:'🎲' }
+];
+
+var COLORS = [
+  { v:'红灯', css:'#ff4d4d' },
+  { v:'橙灯', css:'#ff9a3c' },
+  { v:'黄灯', css:'#ffd93d' },
+  { v:'绿灯', css:'#4ade80' },
+  { v:'青灯', css:'#38e1ff' },
+  { v:'蓝灯', css:'#4f7dff' },
+  { v:'紫灯', css:'#b06cff' },
+  { v:'白灯', css:'#eef2f8' }
+];
+
+var COLOR_ALIAS = { red:'红灯', orange:'橙灯', yellow:'黄灯', green:'绿灯', cyan:'青灯', blue:'蓝灯', purple:'紫灯', white:'白灯' };
+function colorCn(v){ if(!v) return '红灯'; return COLOR_ALIAS[v] || v; }
+
+var DEFAULT_SCRIPTS = {
+  '迎宾': [
+    { do:'effect', effect:'rainbow_light' },
+    { do:'pose', dir:'wake', wait:600 },
+    { do:'emotion', name:'happiness', wait:700 },
+    { do:'pose', dir:'petwave', wait:1000 }
+  ]
+};
+
+var S = { base:'', emotions: FACES.slice(), scripts: JSON.parse(JSON.stringify(DEFAULT_SCRIPTS)) };
+
+function save(){
+  try{ localStorage.setItem(LS, JSON.stringify({ base:S.base, emotions:S.emotions, scripts:S.scripts })); }catch(e){}
+}
+function load(){
+  var raw = null;
+  try{ raw = localStorage.getItem(LS); }catch(e){}
+  if(!raw) return;
+  try{
+    var o = JSON.parse(raw);
+    if(typeof o.base === 'string') S.base = o.base;
+    if(Array.isArray(o.emotions) && o.emotions.length) S.emotions = o.emotions;
+    if(o.scripts && typeof o.scripts === 'object') S.scripts = o.scripts;
+  }catch(e){}
+}
+
+/* ---------------- 基础 UI ---------------- */
+function toast(msg, kind){
+  var t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' ' + kind : '');
+  t.textContent = msg;
+  $('toasts').appendChild(t);
+  setTimeout(function(){
+    t.style.opacity = '0'; t.style.transform = 'translateY(6px)';
+    setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 320);
+  }, kind === 'err' ? 3200 : 1800);
+}
+function buzz(ms){ if(navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
+function guard(fn){
+  try{
+    var r = fn();
+    if(r && typeof r.catch === 'function') r.catch(function(e){ toast((e && e.message) || '操作失败', 'err'); });
+  }catch(e){ toast((e && e.message) || '操作失败', 'err'); }
+}
+function setLine(id, text, ok){
+  var el = $(id); if(!el) return;
+  el.textContent = text;
+  el.className = 'hint' + (ok === false ? ' err' : (ok === true ? ' ok' : ''));
+}
+function errBrief(e){
+  return String((e && e.message) || 'ERR').replace(/^连接失败：/, '').replace(/^HTTP /, '').slice(0, 40);
+}
+
+/* ---------------- 请求 ---------------- */
+function req(path, opts){
+  if(!S.base) return Promise.reject(new Error('先填 IP 并连接'));
+  var method = (opts && opts.method) || 'GET';
+  var init = Object.assign({ cache:'no-store' }, opts || {});
+  delete init.timeout;
+  init.method = method;
+  var to = (opts && opts.timeout) || 6000;
+  var ctrl = new AbortController();
+  init.signal = ctrl.signal;
+  var timer = setTimeout(function(){ ctrl.abort(); }, to);
+  return fetch(S.base + path, init).then(function(res){
+    return res.text().then(function(text){
+      clearTimeout(timer);
+      if(!res.ok){
+        var e = new Error('HTTP ' + res.status + (text ? ' · ' + text.slice(0, 60) : ''));
+        e.status = res.status; e.path = path;
+        throw e;
+      }
+      return text;
+    });
+  }).catch(function(e){
+    clearTimeout(timer);
+    var err;
+    if(e && e.name === 'AbortError'){ err = new Error('超时 ' + Math.round(to/1000) + 's'); err.timeout = true; }
+    else if(e && e.status) err = e;
+    else err = new Error('连接失败：' + ((e && e.message) || '未知'));
+    err.url = S.base + path; err.path = path;
+    throw err;
+  });
+}
+
+function normalize(v){
+  var s = String(v || '').trim();
+  if(!s) return '';
+  if(!/^https?:\/\//i.test(s)) s = 'http://' + s;
+  try{ var u = new URL(s); return u.hostname ? u.origin : ''; }catch(e){ return ''; }
+}
+
+/* 真机有时把名字以「已经 URL 编码」的形式存回来（如 %E7%AB%99%E7%AB%8B），
+   再编码一次就变成 %25E7… → 设备查不到、直接 500。这里统一还原后再编码。 */
+function decName(n){
+  var s = String(n == null ? '' : n);
+  if(/%[0-9A-Fa-f]{2}/.test(s)){
+    try{ return decodeURIComponent(s); }catch(e){}
+  }
+  return s;
+}
+function encName(n){ return encodeURIComponent(decName(n)); }
+
+/* ---------------- 连接：发一次站立，200 就算成功 ---------------- */
+function connect(){
+  var base = normalize($('ipInput').value);
+  if(!base){ toast('IP 不对，例如 192.168.1.100', 'err'); return; }
+  S.base = base; save();
+  var btn = $('btnConnect');
+  btn.className = 'btn-conn';
+  btn.textContent = '连接中…';
+  guard(function(){
+    return req('/move?dir=stand').then(function(){
+      btn.className = 'btn-conn ok';
+      btn.textContent = '已连接';
+      buzz(12);
+      toast('连接成功', 'ok');
+    }).catch(function(e){
+      btn.className = 'btn-conn bad';
+      btn.textContent = '重试';
+      throw e;
+    });
+  });
+}
+
+/* ---------------- 方向：按下走，松手停 ---------------- */
+var moving = false;
+
+function setPressed(dir){
+  Array.prototype.forEach.call(document.querySelectorAll('[data-dir]'), function(b){
+    b.classList.toggle('on', dir !== 'stop' && b.getAttribute('data-dir') === dir);
+  });
+}
+
+function sendDir(dir){
+  setPressed(dir);
+  if(dir !== 'stop') buzz(6);
+  guard(function(){ return req('/move?dir=' + encodeURIComponent(dir)); });
+}
+
+function stopMove(){
+  if(!moving) return;
+  moving = false;
+  sendDir('stop');
+}
+
+Array.prototype.forEach.call(document.querySelectorAll('[data-dir]'), function(btn){
+  var dir = btn.getAttribute('data-dir');
+  btn.addEventListener('pointerdown', function(e){
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    try{ btn.setPointerCapture(e.pointerId); }catch(err){}
+    if(dir === 'stop'){ moving = false; sendDir('stop'); buzz(12); return; }
+    moving = true;
+    sendDir(dir);
+  });
+  function up(){
+    btn.classList.remove('on');
+    if(dir !== 'stop') stopMove();
+  }
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+});
+
+window.addEventListener('pointerup', function(){ if(moving) stopMove(); }, true);
+window.addEventListener('blur', function(){ moving = false; stopMove(); });
+
+var heldKey = null;
+
+document.addEventListener('keydown', function(ev){
+  var t = ev.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+  var k = ev.key.toLowerCase();
+  var map = { w:'forward', s:'back', a:'left', d:'right',
+    arrowup:'forward', arrowdown:'back', arrowleft:'left', arrowright:'right' };
+  if(k === ' '){ ev.preventDefault(); heldKey = null; moving = false; sendDir('stop'); return; }
+  if(map[k]){
+    ev.preventDefault();
+    if(heldKey === k) return;
+    heldKey = k;
+    moving = true;
+    sendDir(map[k]);
+  }
+});
+
+document.addEventListener('keyup', function(ev){
+  var k = ev.key.toLowerCase();
+  if(heldKey === k){ heldKey = null; moving = false; sendDir('stop'); }
+});
+
+/* ---------------- 动作 / 表情 ---------------- */
+function renderPoses(){
+  var box = $('poseCol');
+  box.innerHTML = '<div class="lbl">动作</div>';
+  POSES.forEach(function(p){
+    var b = document.createElement('button');
+    b.className = 'abtn';
+    b.innerHTML = '<em>' + p.icon + '</em>' + p.label;
+    b.addEventListener('click', function(){
+      buzz(8);
+      b.classList.add('on');
+      setTimeout(function(){ b.classList.remove('on'); }, 260);
+      guard(function(){ return req('/move?dir=' + encodeURIComponent(p.dir)); });
+    });
+    box.appendChild(b);
+  });
+}
+
+function renderFaces(){
+  var box = $('faceCol');
+  box.innerHTML = '<div class="lbl">表情</div>';
+  S.emotions.forEach(function(f){
+    var b = document.createElement('button');
+    b.className = 'abtn';
+    b.innerHTML = '<em>' + (f.icon || '🙂') + '</em>' + (f.label || f.name);
+    b.addEventListener('click', function(){
+      buzz(8);
+      b.classList.add('on');
+      setTimeout(function(){ b.classList.remove('on'); }, 260);
+      guard(function(){ return req('/emotion?emotion=' + encodeURIComponent(f.name)); });
+    });
+    box.appendChild(b);
+  });
+}
+
+/* ---------------- 灯光 ---------------- */
+var lastColor = { name:'红灯', hex:'#ff4d4d' };
+
+function enc(s){
+  return encodeURIComponent(String(s)).replace(/\(/g, '%28').replace(/\)/g, '%29');
+}
+
+function applyColor(name, hex){
+  var b = $('bright').value;
+  var rgbStr = 'RGB(' + (function(){
+    var h = String(hex).replace('#','');
+    return parseInt(h.slice(0,2),16) + ',' + parseInt(h.slice(2,4),16) + ',' + parseInt(h.slice(4,6),16);
+  })() + ')';
+  var cn = colorCn(name);
+  return req('/move?dir=light&dir=light&color=' + enc(cn) + '&brightness=' + b)
+    .catch(function(){ return req('/move?dir=light&dir=light&color=' + enc(rgbStr) + '&brightness=' + b); })
+    .then(function(){ setLine('lightState', '已发送 ' + cn + ' · ' + b + '%', true); })
+    .catch(function(e){ setLine('lightState', '灯光失败：' + errBrief(e), false); throw e; });
+}
+
+function applyOff(){
+  return req('/move?dir=light&dir=light&color=' + enc('关灯') + '&brightness=0')
+    .then(function(){ setLine('lightState', '已关灯', true); })
+    .catch(function(e){ setLine('lightState', '关灯失败：' + errBrief(e), false); throw e; });
+}
+
+function applyEffect(name){
+  var b = $('bright').value;
+  return req('/move?dir=light_effect&dir=light_effect&effect=' + encodeURIComponent(name) + '&brightness=' + b)
+    .then(function(){ setLine('lightState', '已发送灯效 ' + name, true); })
+    .catch(function(e){ setLine('lightState', '灯效失败：' + errBrief(e), false); throw e; });
+}
+
+function renderColors(){
+  var box = $('swatches');
+  box.innerHTML = '';
+  COLORS.forEach(function(c, i){
+    var b = document.createElement('button');
+    b.className = 'sw' + (i === 0 ? ' on' : '');
+    b.style.background = c.css;
+    b.title = c.v;
+    b.setAttribute('data-c', c.v);
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(box.children, function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      lastColor = { name:c.v, hex:c.css };
+      buzz(8);
+      guard(function(){ return applyColor(c.v, c.css); });
+    });
+    box.appendChild(b);
+  });
+  var off = document.createElement('button');
+  off.className = 'sw off';
+  off.textContent = '关灯';
+  off.addEventListener('click', function(){
+    Array.prototype.forEach.call(box.children, function(x){ x.classList.remove('on'); });
+    off.classList.add('on');
+    buzz(12);
+    guard(applyOff);
+  });
+  box.appendChild(off);
+}
+
+var bright = $('bright');
+function paintRange(){
+  bright.style.setProperty('--p', bright.value + '%');
+  $('briVal').textContent = bright.value + '%';
+}
+bright.addEventListener('input', paintRange);
+bright.addEventListener('change', function(){
+  guard(function(){ return applyColor(lastColor.name, lastColor.hex); });
+});
+
+Array.prototype.forEach.call(document.querySelectorAll('[data-effect]'), function(btn){
+  var name = btn.getAttribute('data-effect');
+  btn.addEventListener('click', function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-effect]'), function(x){ x.classList.remove('on'); });
+    btn.classList.add('on');
+    buzz(8);
+    guard(function(){ return applyEffect(name); });
+  });
+});
+
+/* ---------------- 画板 ---------------- */
+var W = 128, H = 64, CELL = 4;
+var pixels = new Uint8Array(W * H);
+var pad = $('pad'), pctx = pad.getContext('2d');
+var tool = 'pen', drawing = false;
+
+function drawPad(){
+  pctx.fillStyle = '#ffffff';
+  pctx.fillRect(0, 0, W * CELL, H * CELL);
+  pctx.fillStyle = 'rgba(17,24,39,.06)';
+  for(var gx = 0; gx <= W; gx += 8) pctx.fillRect(gx * CELL, 0, 1, H * CELL);
+  for(var gy = 0; gy <= H; gy += 8) pctx.fillRect(0, gy * CELL, W * CELL, 1);
+  pctx.fillStyle = '#111827';
+  for(var y = 0; y < H; y++){
+    for(var x = 0; x < W; x++){
+      if(pixels[y * W + x]) pctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+    }
+  }
+}
+
+function padPoint(ev){
+  var r = pad.getBoundingClientRect();
+  var x = Math.floor((ev.clientX - r.left) / r.width * W);
+  var y = Math.floor((ev.clientY - r.top) / r.height * H);
+  return { x: Math.max(0, Math.min(W-1, x)), y: Math.max(0, Math.min(H-1, y)) };
+}
+
+/* 只在需要时重绘一帧，连续滑动不卡 */
+var needDraw = false;
+function requestDraw(){
+  if(needDraw) return;
+  needDraw = true;
+  (window.requestAnimationFrame || function(f){ setTimeout(f, 16); })(function(){
+    needDraw = false;
+    drawPad();
+  });
+}
+
+/* 两个采样点之间补线（Bresenham），手再快也不断 */
+function strokeLine(x0, y0, x1, y1, v){
+  var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  var dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  var err = dx + dy, changed = false;
+  for(;;){
+    var idx = y0 * W + x0;
+    if(pixels[idx] !== v){ pixels[idx] = v; changed = true; }
+    if(x0 === x1 && y0 === y1) break;
+    var e2 = 2 * err;
+    if(e2 >= dy){ err += dy; x0 += sx; }
+    if(e2 <= dx){ err += dx; y0 += sy; }
+  }
+  if(changed) requestDraw();
+}
+
+var lastPt = null;
+
+function strokeThrough(ev){
+  var v = tool === 'pen' ? 1 : 0;
+  var events = (ev.getCoalescedEvents && ev.getCoalescedEvents().length) ? ev.getCoalescedEvents() : [ev];
+  for(var i = 0; i < events.length; i++){
+    var p = padPoint(events[i]);
+    if(lastPt) strokeLine(lastPt.x, lastPt.y, p.x, p.y, v);
+    else strokeLine(p.x, p.y, p.x, p.y, v);
+    lastPt = p;
+  }
+}
+
+pad.addEventListener('pointerdown', function(ev){
+  ev.preventDefault();
+  drawing = true;
+  lastPt = null;
+  try{ pad.setPointerCapture(ev.pointerId); }catch(e){}
+  strokeThrough(ev);
+});
+
+pad.addEventListener('pointermove', function(ev){
+  if(!drawing) return;
+  ev.preventDefault();
+  strokeThrough(ev);
+});
+
+function endStroke(){ drawing = false; lastPt = null; }
+pad.addEventListener('pointerup', endStroke);
+pad.addEventListener('pointercancel', endStroke);
+pad.addEventListener('pointerleave', function(){ if(!drawing) lastPt = null; });
+
+function setTool(t){
+  tool = t;
+  $('toolPen').classList.toggle('on', t === 'pen');
+  $('toolEraser').classList.toggle('on', t === 'eraser');
+}
+$('toolPen').addEventListener('click', function(){ setTool('pen'); });
+$('toolEraser').addEventListener('click', function(){ setTool('eraser'); });
+$('btnClear').addEventListener('click', function(){ pixels.fill(0); drawPad(); });
+$('btnInvert').addEventListener('click', function(){
+  for(var i = 0; i < pixels.length; i++) pixels[i] = pixels[i] ? 0 : 1;
+  drawPad();
+});
+$('btnTest').addEventListener('click', function(){
+  pixels.fill(0);
+  var x, y;
+  for(x = 0; x < W; x++){ pixels[x] = 1; pixels[(H-1)*W + x] = 1; }
+  for(y = 0; y < H; y++){ pixels[y*W] = 1; pixels[y*W + W-1] = 1; }
+  for(x = 0; x < W; x += 4){
+    for(y = 0; y < H; y += 4){
+      if(((x/4) + (y/4)) % 2 === 0) pixels[y*W + x] = 1;
+    }
+  }
+  drawPad();
+});
+
+/* 像素 → 128×64 黑白 GIF89a（内置编码器，Clear 分隔保证码宽恒定） */
+function gifFromPixels(){
+  var bytes = [];
+  function push(a){ for(var i = 0; i < a.length; i++) bytes.push(a[i] & 0xff); }
+  function push16(v){ bytes.push(v & 0xff, (v >> 8) & 0xff); }
+  push([0x47,0x49,0x46,0x38,0x39,0x61]);
+  push16(W); push16(H);
+  push([0x80, 0x00, 0x00]);
+  push([0,0,0, 255,255,255]);
+  push([0x21,0xF9,0x04,0x00, 0x00,0x00, 0x00,0x00]);
+  push([0x2C]); push16(0); push16(0); push16(W); push16(H); push([0x00]);
+  push([0x02]);
+  var out = [], cur = 0, bits = 0;
+  function emit(code, size){
+    cur |= code << bits; bits += size;
+    while(bits >= 8){ out.push(cur & 0xff); cur >>= 8; bits -= 8; }
+  }
+  for(var i = 0; i < W * H; i++){
+    emit(4, 3);
+    emit(pixels[i] ? 1 : 0, 3);
+  }
+  emit(5, 3);
+  if(bits > 0) out.push(cur & 0xff);
+  for(var off = 0; off < out.length; off += 255){
+    var n = Math.min(255, out.length - off);
+    bytes.push(n);
+    for(var k = 0; k < n; k++) bytes.push(out[off + k]);
+  }
+  bytes.push(0x00, 0x3B);
+  return new Blob([new Uint8Array(bytes)], { type:'image/gif' });
+}
+
+/* ---------------- 自定义表情（真机接口） ---------------- */
+var EMO_DIR = '/custom_emo';
+
+function emoMkdir(){ return req('/sdcard/mkdir?path=' + encodeURIComponent(EMO_DIR), { method:'POST', timeout:8000 }); }
+function emoList(){ return req('/custom_emo?cmd=list&_=' + Date.now(), { timeout:8000 }); }
+function emoPlay(n){ return req('/custom_emo?cmd=play&name=' + encName(n) + '&_=' + Date.now()); }
+function emoReload(n){ return req('/custom_emo?cmd=reload&name=' + encName(n)); }
+function emoDelete(n){ return req('/custom_emo?cmd=delete&name=' + encName(n)); }
+function emoConfig(n, music, loop){
+  return req('/custom_emo?cmd=set_config&name=' + encName(n) +
+    '&music=' + encodeURIComponent(music || '') +
+    '&action=&custom_action=&loop=' + (loop === false ? 0 : 1));
+}
+function musicList(){
+  return req('/sdcard?path=' + encodeURIComponent('/music/mp3') + '&_=' + Date.now(), { timeout:10000 });
+}
+
+function sdPath(p){
+  return String(p).split('/').map(function(s){ return s ? encodeURIComponent(s) : ''; }).join('/');
+}
+
+function emoUpload(stem, blob){
+  return new Promise(function(resolve, reject){
+    function fail(msg, t){
+      var e = new Error(msg); e.path = '/sdcard/upload'; e.timeout = !!t; reject(e);
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', S.base + '/sdcard/upload');
+    xhr.timeout = 60000;
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    xhr.setRequestHeader('X-Sd-Path', sdPath(EMO_DIR + '/' + stem + '.gif'));
+    xhr.onload = function(){
+      var txt = String(xhr.responseText || '').trim();
+      if(xhr.status >= 200 && xhr.status < 300 && txt === 'OK') resolve(txt);
+      else fail('HTTP ' + xhr.status + (txt ? ' · ' + txt.slice(0, 40) : ''));
+    };
+    xhr.onerror = function(){ fail('网络错误'); };
+    xhr.ontimeout = function(){ fail('上传超时 60s', true); };
+    xhr.send(blob);
+  });
+}
+
+function emoItems(text){
+  try{
+    var d = JSON.parse(text);
+    if(Array.isArray(d)) return d;
+    if(d && Array.isArray(d.items)) return d.items;
+  }catch(e){}
+  return [];
+}
+
+function padStem(){
+  var n = ($('padName').value || '').trim() || 'myface';
+  n = n.replace(/\.(gif|bin)$/i, '').replace(/[^\w\u4e00-\u9fa5-]/g, '_');
+  return n || 'myface';
+}
+
+var padBusy = false;
+
+function pushGif(gif, stem, play){
+  if(!S.base){ toast('先连接设备', 'err'); return; }
+  if(padBusy){ toast('上一次还在发', 'err'); return; }
+  padBusy = true;
+  $('btnSend').disabled = true;
+  $('btnSaveSD').disabled = true;
+  setLine('padState', '上传中 · ' + stem + '.gif · ' + (gif.size/1024).toFixed(1) + ' KB…');
+
+  function done(){ padBusy = false; $('btnSend').disabled = false; $('btnSaveSD').disabled = false; }
+  var trace = [];
+
+  var chain = emoMkdir().then(function(){ trace.push('mkdir✓'); }, function(){ trace.push('mkdir·'); })
+    .then(function(){ return emoUpload(stem, gif).then(function(){ trace.push('upload✓'); }); })
+    .then(function(){ return emoReload(stem).then(function(){ trace.push('reload✓'); }, function(){ trace.push('reload×'); }); })
+    .then(function(){
+      if(!play) return null;
+      return emoConfig(stem).then(function(){ trace.push('config✓'); }, function(){ trace.push('config×'); });
+    })
+    .then(function(){
+      if(!play) return null;
+      return emoPlay(stem).then(function(){ trace.push('play✓'); });
+    })
+    .then(function(){ return emoList().then(function(t){ renderEmos(emoItems(t)); }, function(){}); });
+
+  guard(function(){
+    return chain.then(function(){
+      setLine('padState', (play ? '已上屏 ' : '已上传 ') + stem + '.gif ｜ ' + trace.join(' '), true);
+      toast(play ? '已上屏' : '已上传', 'ok');
+      done();
+    }, function(e){
+      var tip = (e && e.timeout) ? '（设备没响应，等几秒或断电重启）' : '';
+      setLine('padState', '失败 ｜ ' + trace.join(' ') + (e && e.message ? ' ｜ ' + e.message : '') + tip, false);
+      done();
+      throw e;
+    });
+  });
+}
+
+function pushPad(play){
+  setLine('padState', '正在生成 GIF…');
+  guard(function(){ pushGif(gifFromPixels(), padStem(), play); });
+}
+
+var convLoading = null;
+function loadConverter(){
+  if(window.EmotionGifConvert) return Promise.resolve(true);
+  if(convLoading) return convLoading;
+  convLoading = new Promise(function(res){
+    var s = document.createElement('script');
+    s.src = './emotion_gif_convert.js';
+    s.onload = function(){ res(!!window.EmotionGifConvert); };
+    s.onerror = function(){ convLoading = null; res(false); };
+    document.head.appendChild(s);
+  });
+  return convLoading;
+}
+
+$('btnSend').addEventListener('click', function(){ pushPad(true); });
+$('btnSaveSD').addEventListener('click', function(){ pushPad(false); });
+
+$('btnPickFile').addEventListener('click', function(){ $('emoFile').click(); });
+
+$('emoFile').addEventListener('change', function(ev){
+  var f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if(!f) return;
+  var stem = padStem();
+  setLine('padState', '正在准备转换器…');
+  guard(function(){
+    return loadConverter().then(function(ok){
+      if(!ok){ setLine('padState', '图片/视频需要 emotion_gif_convert.js 放在同目录（画板不需要）', false); return; }
+      setLine('padState', '正在转换「' + f.name + '」…');
+      var file = new File([f], f.name, { type: f.type || 'image/png' });
+      return window.EmotionGifConvert.convertToDeviceGif(file, {}).then(function(gif){
+        pushGif(gif, stem, true);
+      });
+    });
+  });
+});
+
+/* 表情列表：播放 / 配音乐 / 删 */
+function renderEmos(items){
+  var box = $('emoList');
+  box.innerHTML = '';
+  if(!items || !items.length){ box.innerHTML = '<div class="empty">还没有上传过表情</div>'; return; }
+  items.forEach(function(it){
+    var raw = typeof it === 'string' ? it : ((it && it.name) || '');
+    if(!raw) return;
+    var name = decName(raw);
+    var kb = (it && it.size) ? Math.round(it.size / 1024) + 'KB' : '';
+    var row = document.createElement('div');
+    row.className = 'item';
+    var t = document.createElement('span');
+    t.className = 'grow';
+    t.textContent = name + (kb ? ' · ' + kb : '');
+    var play = document.createElement('button');
+    play.className = 'mini'; play.textContent = '播放';
+    play.addEventListener('click', function(){
+      guard(function(){ return emoPlay(raw).then(function(){ toast('播放 ' + name, 'ok'); }); });
+    });
+    var mus = document.createElement('button');
+    mus.className = 'mini'; mus.textContent = '配音乐';
+    mus.addEventListener('click', function(){
+      guard(function(){
+        return musicList().then(function(txt){
+          var arr = [];
+          try{
+            var d = JSON.parse(txt);
+            if(Array.isArray(d)) arr = d;
+            else if(d && Array.isArray(d.entries)) arr = d.entries;
+            else if(d && Array.isArray(d.files)) arr = d.files;
+            else if(d && Array.isArray(d.items)) arr = d.items;
+          }catch(e){ arr = []; }
+          return arr.map(function(x){
+            if(typeof x === 'string') return x;
+            if(!x || x.type === 'dir') return '';
+            return x.name || x.file || '';
+          }).filter(function(n){ return n && /\.(mp3|wav|m4a)$/i.test(n); });
+        }, function(){ return []; }).then(function(names){
+          var msg = names.length
+            ? '选音乐（留空 = 不放音乐）\n' + names.join('\n')
+            : '没读到 /music/mp3 的歌曲，可以直接手填文件名（如 song.mp3），留空 = 不放音乐';
+          var pick = window.prompt(msg, names[0] || '');
+          if(pick === null) return;
+          var music = pick.trim();
+          return emoConfig(raw, music).then(function(){
+            toast(music ? '已配音乐 ' + music : '已取消音乐', 'ok');
+          });
+        });
+      });
+    });
+    var del = document.createElement('button');
+    del.className = 'mini danger'; del.textContent = '删';
+    del.addEventListener('click', function(){
+      if(!window.confirm('删除表情「' + name + '」？')) return;
+      guard(function(){
+        return emoDelete(raw).then(function(){
+          toast('已删除', 'ok');
+          return emoList().then(function(s){ renderEmos(emoItems(s)); });
+        });
+      });
+    });
+    row.appendChild(t); row.appendChild(play); row.appendChild(mus); row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+/* ---------------- 自定义动作 ---------------- */
+var actSteps = [{ lf:90, rf:90, lb:90, rb:90, delay:500 }];
+
+function clampNum(v, min, max, dflt){
+  var n = parseInt(v, 10);
+  if(isNaN(n)) return dflt;
+  return Math.max(min, Math.min(max, n));
+}
+
+function renderSteps(){
+  var box = $('stepList');
+  box.innerHTML = '';
+  if(!actSteps.length){ box.innerHTML = '<div class="empty">点下面「添加一步」</div>'; return; }
+  actSteps.forEach(function(st, i){
+    var row = document.createElement('div');
+    row.className = 'step';
+    var no = document.createElement('span');
+    no.className = 'no'; no.textContent = String(i + 1);
+    row.appendChild(no);
+    ['lf', 'rf', 'lb', 'rb'].forEach(function(k){
+      var inp = document.createElement('input');
+      inp.type = 'number'; inp.min = '0'; inp.max = '180';
+      inp.value = st[k]; inp.title = k.toUpperCase();
+      inp.addEventListener('change', function(){ st[k] = clampNum(inp.value, 0, 180, 90); inp.value = st[k]; });
+      row.appendChild(inp);
+    });
+    var d = document.createElement('input');
+    d.type = 'number'; d.min = '0'; d.max = '65535';
+    d.className = 'dl'; d.value = st.delay; d.title = '延时 ms';
+    d.addEventListener('change', function(){ st.delay = clampNum(d.value, 0, 65535, 500); d.value = st.delay; });
+    row.appendChild(d);
+    var x = document.createElement('button');
+    x.className = 'x'; x.textContent = '×';
+    x.addEventListener('click', function(){ actSteps.splice(i, 1); renderSteps(); });
+    row.appendChild(x);
+    box.appendChild(row);
+  });
+}
+
+function loadStepsFromJson(json){
+  var o = null;
+  try{ o = JSON.parse(json); }catch(e){ o = null; }
+  if(o && Array.isArray(o.steps) && o.steps.length){
+    actSteps = o.steps.slice(0, 100).map(function(s){
+      return {
+        lf: clampNum(s && s.lf, 0, 180, 90),
+        rf: clampNum(s && s.rf, 0, 180, 90),
+        lb: clampNum(s && s.lb, 0, 180, 90),
+        rb: clampNum(s && s.rb, 0, 180, 90),
+        delay: clampNum(s && s.delay, 0, 65535, 500)
+      };
+    });
+  }
+  renderSteps();
+}
+
+$('btnAddStep').addEventListener('click', function(){
+  if(actSteps.length >= 100){ toast('最多 100 步', 'err'); return; }
+  var last = actSteps[actSteps.length - 1] || { lf:90, rf:90, lb:90, rb:90, delay:500 };
+  actSteps.push({ lf:last.lf, rf:last.rf, lb:last.lb, rb:last.rb, delay:500 });
+  renderSteps();
+});
+
+function renderActions(arr){
+  var box = $('actionList');
+  box.innerHTML = '';
+  if(!arr || !arr.length){ box.innerHTML = '<div class="empty">还没有保存的动作</div>'; return; }
+  arr.forEach(function(item){
+    var raw = typeof item === 'string' ? item : ((item && (item.name || item.file)) || '');
+    if(!raw) return;
+    var name = decName(raw);          // 显示用解码后的名字
+    var row = document.createElement('div');
+    row.className = 'item';
+    var t = document.createElement('span');
+    t.className = 'grow'; t.textContent = name;
+    var play = document.createElement('button');
+    play.className = 'mini'; play.textContent = '播放';
+    play.addEventListener('click', function(){
+      guard(function(){
+        return req('/custom_action?action=' + encName(raw)).then(function(){ toast('执行 ' + name, 'ok'); });
+      });
+    });
+    var edit = document.createElement('button');
+    edit.className = 'mini'; edit.textContent = '编辑';
+    edit.addEventListener('click', function(){
+      guard(function(){
+        return req('/custom_action?name=' + encName(raw)).then(function(json){
+          loadStepsFromJson(json);
+          $('actionName').value = name;
+          toast('已读取', 'ok');
+        });
+      });
+    });
+    var del = document.createElement('button');
+    del.className = 'mini danger'; del.textContent = '删';
+    del.addEventListener('click', function(){
+      guard(function(){
+        return req('/custom_action?name=' + encName(raw), { method:'DELETE' }).then(function(){
+          toast('已删除', 'ok');
+          return req('/custom_action').then(function(t2){
+            var a = []; try{ a = JSON.parse(t2); }catch(e){}
+            renderActions(Array.isArray(a) ? a : []);
+          });
+        });
+      });
+    });
+    row.appendChild(t); row.appendChild(play); row.appendChild(edit); row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+$('btnListActions').addEventListener('click', function(){
+  guard(function(){
+    return req('/custom_action').then(function(t){
+      var a = []; try{ a = JSON.parse(t); }catch(e){}
+      renderActions(Array.isArray(a) ? a : []);
+    });
+  });
+});
+
+$('btnSaveAction').addEventListener('click', function(){
+  var name = decName(($('actionName').value || '').trim());
+  if(!name){ toast('先填动作名', 'err'); return; }
+  if(!actSteps.length){ toast('至少一步', 'err'); return; }
+  var body = JSON.stringify({ steps: actSteps });
+  if(body.length > 8192){ toast('太大（' + body.length + ' 字节）', 'err'); return; }
+  guard(function(){
+    return req('/custom_action?name=' + encodeURIComponent(name), {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: body
+    }).then(function(){
+      toast('已保存 ' + name, 'ok');
+      return req('/custom_action').then(function(t){
+        var a = []; try{ a = JSON.parse(t); }catch(e){}
+        renderActions(Array.isArray(a) ? a : []);
+      });
+    });
+  });
+});
+
+/* ---------------- 启动 ---------------- */
+(function init(){
+  load();
+  $('ipInput').value = S.base ? S.base.replace(/^https?:\/\//, '') : '';
+  $('btnConnect').addEventListener('click', connect);
+  $('ipInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') connect(); });
+
+  renderPoses();
+  renderFaces();
+  renderColors();
+  paintRange();
+  renderSteps();
+  drawPad();
+
+  var logo = $('logoImg');
+  function logoFail(){ logo.style.display = 'none'; $('logoFb').style.display = 'flex'; }
+  logo.addEventListener('error', logoFail);
+  if(logo.complete && logo.naturalWidth === 0) logoFail();
+
+  if(S.base){
+    guard(function(){
+      return req('/move?dir=stand').then(function(){
+        $('btnConnect').className = 'btn-conn ok';
+        $('btnConnect').textContent = '已连接';
+      }).catch(function(){
+        $('btnConnect').className = 'btn-conn';
+        $('btnConnect').textContent = '连接';
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
